@@ -1,0 +1,50 @@
+package selenium;
+import java.util.regex.Pattern;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.*;
+import static org.testng.Assert.*;
+import org.openqa.selenium.*;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.remote.RemoteWebDriver;
+public class VersionCheckTest {
+    private WebDriver driver;
+    private String baseUrl;
+    @BeforeTest(alwaysRun = true)
+    public void setUp() throws Exception {
+        DesiredCapabilities capability = DesiredCapabilities.chrome();
+        capability.setBrowserName("chrome");
+        capability.setPlatform(Platform.LINUX);
+        driver = new RemoteWebDriver(new URL("http://selenium-hub-core:4444/wd/hub"), capability);  //selenium-hub-core  or selenium
+        baseUrl = "http://localhost:8080";
+        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+    }
+    @Test
+    public void testJenkinsTestng() throws Exception {
+        driver.get(baseUrl + "/login");
+        driver.findElement(By.id("inputUsername")).clear();
+        driver.findElement(By.id("inputUsername")).sendKeys("pladmin");
+        driver.findElement(By.id("inputPassword")).clear();
+        driver.findElement(By.id("inputPassword")).sendKeys("pladmin");
+        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        Thread.sleep(6000);
+        System.out.println("Logged in to PL");
+        driver.switchTo().frame("mainFrame");
+        System.out.println("Switched frame");
+        System.out.println("Test Check Jenkins Version");
+        for (int second = 0;; second++) {
+            if (second >= 60) Assert.fail("timeout");
+            try { if ("PL: Dashboard [Jenkins]".equals(driver.getTitle())) break; } catch (Exception e) {}
+            Thread.sleep(1000);
+        }
+        Assert.assertEquals(driver.findElement(By.linkText("Jenkins ver. 2.7.1")).getText(), "Jenkins ver. 2.7.1");
+    }
+    @AfterTest(alwaysRun = true)
+    public void tearDown() throws Exception {
+        driver.close();
+        driver.quit();
+    }
+}
